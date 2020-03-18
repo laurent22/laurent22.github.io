@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>VideoContext</title>
+		<script src="./VideoContext/dist/videocontext.js" type="text/javascript"></script>
+	</head>
+	<body>
+		<canvas width="640" height="480" id="canvas" style="width: 640px; height: 480px;"></canvas>
+
+        <div id="currentTime"></div>
+		<script>
+            
+// Issues?
+//
+// - Need to encode video with fast decoding codec
+// - Is it possible to seek video?
+// - Is it possible to pause video?
+// - What about videos made of many segments? Does complete video needs to be built before playing?
+//     - Possible to add segments once video started?
+// - How to handle images?
+
+var canvas = document.getElementById("canvas");
+var videoCtx = new VideoContext(canvas);
+
+const testCaseId = 3;
+
+const testCase1 = () => {
+    var videoNode1 = videoCtx.video("./media/SampleVideo_1280x720_10s.mp4");
+    videoNode1.start(0);
+
+    var videoNode2 = videoCtx.video("./media/SampleVideo_1280x720_10s.mp4");
+    videoNode2.start(5);
+
+    var crossFade = videoCtx.transition(VideoContext.DEFINITIONS.CROSSFADE);
+    crossFade.transition(5,6,0.0,1.0, "mix");
+
+    videoNode1.connect(crossFade);
+    videoNode2.connect(crossFade);
+    crossFade.connect(videoCtx.destination);
+}
+
+let testCase2_videoIndex = 0;
+
+const testCase2 = () => {
+    document.getElementById('addVideoButton').style.display = 'block';
+
+    let t = 0;
+    for (let i = 0; i < 10; i++) {
+        testCase2_videoIndex = i;
+        var v = videoCtx.video("./media/SampleVideo_1280x720_1mb.mp4");
+        v.start(t);
+        v.stop(t + 5);
+        t += 5;
+        v.connect(videoCtx.destination);
+    }
+}
+
+const testCase2_addVideo = () => {
+    testCase2_videoIndex++;
+    var v = videoCtx.video("./media/SampleVideo_1280x720_1mb.mp4");
+    v.start(testCase2_videoIndex * 5);
+    v.stop(testCase2_videoIndex * 5 + 5);
+    v.connect(videoCtx.destination);
+}
+
+const testCase3 = () => {
+    var videoNode1 = videoCtx.video("./media/SampleVideo_1280x720_10s.mp4");
+    videoNode1.start(0);
+
+    var videoNode2 = videoCtx.image("./media/city.jpg");
+    videoNode2.start(5);
+
+    var crossFade = videoCtx.transition(VideoContext.DEFINITIONS.CROSSFADE);
+    crossFade.transition(5,6,0.0,1.0, "mix");
+
+    videoNode1.connect(crossFade);
+    videoNode2.connect(crossFade);
+    crossFade.connect(videoCtx.destination);
+}
+
+setInterval(() => {
+    document.getElementById('currentTime').innerText = videoCtx.currentTime.toFixed(2) + 's' + ' / ' + videoCtx.duration + 's';
+}, 100);
+
+function setCurrentTime() {
+    const t = Number(document.getElementById('currentTimeInput').value);
+    if (isNaN(t)) {
+        console.warn('NaN');
+        return;
+    }
+    videoCtx.currentTime = t;
+}
+
+function playVideo() {
+	videoCtx.play();
+}
+
+function pauseVideo() {
+    videoCtx.pause();
+}
+
+function addVideo() {
+    videoCtx.pause();
+}                
+		</script>
+
+		<button onClick="javascript:playVideo();">PLAY</button>
+        <button onClick="javascript:pauseVideo();">PAUSE</button>
+        <button onClick="javascript:testCase2_addVideo();" style="display: none" id="addVideoButton">ADD VIDEO</button>
+
+        <div>Current time: <input type="text" id="currentTimeInput"><button  onClick="javascript:setCurrentTime();">SET</button>
+	</body>
+
+<script>
+if (testCaseId === 1) testCase1();
+if (testCaseId === 2) testCase2();
+if (testCaseId === 3) testCase3();
+</script>
+</html>

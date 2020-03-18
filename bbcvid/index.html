@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>VideoContext</title>
+		<script src="./VideoContext/dist/videocontext.js" type="text/javascript"></script>
+	</head>
+	<body>
+		<canvas id="canvas" style="width: 640px; height: 480px;"></canvas>
+
+
+		<script>
+
+/*
+About
+-----
+This a code based video editor powered by the VideoContext library.
+
+The example code below should give a good overview of how this works.
+Pressing CTRL+S will and play your edits in browser.
+
+API
+---
+vc - VideoContext instance (https://github.com/bbc/VideoContext).
+vc.video(url) - create a new video
+vc.image(url) - create a new image
+vc.effect(definitiion) - create an effect node.
+vc.compositor(definition)  - create a compositor node.
+vc.transition(definition) - create a transition node.
+vc.DEFINITIONS - an object containing effect definitions.
+
+Effect Definitions
+------------------
+The folloring effects are available via the DEFINITION object. A definiton cam be used to create any type of processing node, but they can be loosely grouped as the following:
+
+effects: AAF_VIDEO_SCALE, STATIC_EFFECT, COLORTHRESHOLD, MONOCHROME, HORIZONTAL_BLUR, VERTICAL_BLUR, AAF_VIDEO_CROP, AAF_VIDEO_POSITION, AAF_VIDEO_FLIP, AAF_VIDEO_FLOP
+combiners:COMBINE, 
+transitions: CROSSFADE, DREAMFADE, HORIZONTAL_WIPE, VERTICAL_WIPE, RANDOM_DISSOLVE, STATIC_DISSOLVE, TO_COLOR_AND_BACK, STAR_WIPE
+
+Shortcuts
+---------
+Ctrl+S = play & save
+
+Caveats
+-------
+  * Content thats dosen't have a local path needs to be served from a server with a liberal CORS policy. (imgur is good for images).
+*/
+
+//Set-up rendering environment
+var canvas = document.getElementById("canvas");
+window.vc = new VideoContext(canvas);
+
+
+//Create nodes for processing graph.
+var videoNode1 = vc.video("./media/SampleVideo_1280x720_5mb.mp4", 0);
+var videoNode2 = vc.video("./media/SampleVideo_1280x720_5mb.mp4", 10);
+var videoNode3 = vc.video("./media/SampleVideo_1280x720_5mb.mp4", 20);
+
+var monochromeEffect = vc.effect(VideoContext.DEFINITIONS.MONOCHROME);
+var transitionNode = vc.transition(VideoContext.DEFINITIONS.STAR_WIPE);
+var chromakeyNode = vc.effect(VideoContext.DEFINITIONS.COLORTHRESHOLD);
+
+//Connect the graph graph together
+videoNode1.connect(monochromeEffect);
+monochromeEffect.connect(transitionNode);
+videoNode2.connect(transitionNode);
+transitionNode.connect(vc.destination);
+videoNode3.connect(chromakeyNode);
+chromakeyNode.connect(vc.destination);
+
+
+//Setup the start/stop times for the video sources
+videoNode1.start(0);
+videoNode1.stop(5);
+videoNode2.start(3);
+videoNode2.stop(11);
+videoNode3.start(0);
+videoNode3.stop(11);
+
+//Que up a transition
+transitionNode.transition(3,5,0.0,1.0); 
+
+
+vc.play();
+                
+		</script>
+	</body>
+</html>
